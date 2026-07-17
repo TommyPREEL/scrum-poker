@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Check, Eye, EyeOff, RefreshCw, LogOut, Pencil, Users, Share2 } from "lucide-react";
+import { Check, Eye, EyeOff, RefreshCw, LogOut, Pencil, Users, Share2, Link } from "lucide-react";
 import { DECK, NUMERIC, STALE_MS } from "../constants.js";
 import { Seat } from "./Seat.jsx";
 import { HandCard } from "./HandCard.jsx";
@@ -14,10 +14,13 @@ export function RoomScreen({
   onReveal,
   onNewRound,
   onLeave,
+  onUpdateSharedUrl,
 }) {
   const [linkCopied, setLinkCopied] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState(name);
+  const [editingUrl, setEditingUrl] = useState(false);
+  const [draftUrl, setDraftUrl] = useState("");
 
   const players = useMemo(() => {
     return Object.entries(room.players || {})
@@ -62,25 +65,10 @@ export function RoomScreen({
   const shareLink = async () => {
     const url = `${window.location.origin}${window.location.pathname}?room=${roomCode}`;
     
-    // Try native share API first (mobile)
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Scrum Poker',
-          text: `Join my planning poker session`,
-          url: url
-        });
-        return;
-      } catch {
-        // User cancelled or share not available, fall back to copy
-      }
-    }
-    
-    // Fallback to clipboard
     try {
       await navigator.clipboard.writeText(url);
       setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 1500);
+      setTimeout(() => setLinkCopied(false), 2000);
     } catch {
       /* clipboard unavailable, ignore */
     }
@@ -93,6 +81,17 @@ export function RoomScreen({
     else setDraftName(name);
   };
 
+  const saveUrl = () => {
+    const trimmed = draftUrl.trim();
+    setEditingUrl(false);
+    if (trimmed !== (room.sharedUrl || "")) onUpdateSharedUrl(trimmed);
+  };
+
+  const startEditingUrl = () => {
+    setDraftUrl(room.sharedUrl || "");
+    setEditingUrl(true);
+  };
+
   return (
     <div className="sp-root sp-room">
       <header className="sp-header">
@@ -101,7 +100,11 @@ export function RoomScreen({
           <div>
             <div className="sp-room-code-row">
               <span className="sp-room-code">{roomCode}</span>
-              <button className="sp-icon-btn sp-icon-btn--ghost" onClick={shareLink} title="Share link">
+              <button 
+                className={`sp-icon-btn sp-icon-btn--ghost${linkCopied ? ' sp-icon-btn--success' : ''}`}
+                onClick={shareLink} 
+                title={linkCopied ? "Link copied!" : "Share link"}
+              >
                 {linkCopied ? <Check size={15} /> : <Share2 size={15} />}
               </button>
             </div>
@@ -139,6 +142,57 @@ export function RoomScreen({
           </button>
         </div>
       </header>
+
+      {(room.sharedUrl || editingUrl) && (
+        <div className="sp-shared-url">
+          <Link size={14} />
+          {editingUrl ? (
+            <input
+              autoFocus
+              className="sp-shared-url-input"
+              value={draftUrl}
+              placeholder="https://example.com/story-123"
+              onChange={(e) => setDraftUrl(e.target.value)}
+              onBlur={saveUrl}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") saveUrl();
+                if (e.key === "Escape") {
+                  setDraftUrl(room.sharedUrl || "");
+                  setEditingUrl(false);
+                }
+              }}
+            />
+          ) : (
+            <>
+              <a 
+                href={room.sharedUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="sp-shared-url-link"
+                title="Open link in new tab"
+              >
+                {room.sharedUrl}
+              </a>
+              <button 
+                className="sp-icon-btn sp-icon-btn--ghost" 
+                onClick={startEditingUrl}
+                title="Edit URL"
+              >
+                <Pencil size={14} />
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {!room.sharedUrl && !editingUrl && (
+        <div className="sp-shared-url sp-shared-url--empty">
+          <button className="sp-shared-url-add" onClick={startEditingUrl}>
+            <Link size={14} />
+            Share a link with everyone
+          </button>
+        </div>
+      )}
 
       <main className="sp-table-wrap">
         <div className="sp-table">

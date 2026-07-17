@@ -33,32 +33,56 @@ connaissent que leurs props. `App.jsx` est le seul endroit qui relie tout.
 
 ## Installation
 
+## Setup
+
 ```bash
 npm install
+```
+
+## Development
+
+To run the app in development mode, you need to start both the Vite dev server and the Socket.IO server:
+
+```bash
+# Terminal 1: Start the Socket.IO server
+npm run server
+
+# Terminal 2: Start the Vite dev server
 npm run dev
 ```
 
-## ⚠️ À propos du multi-joueur
+Then open <http://localhost:5173>
 
-Le fichier `src/lib/roomStore.js` utilise `window.storage`, une API de
-stockage partagé disponible **uniquement dans l'environnement Claude
-Artifacts**. Hors de Claude, le code retombe automatiquement sur
-`localStorage`, qui reste local à un seul navigateur : tu pourras tester
-l'interface tout seul, mais deux personnes sur deux ordinateurs différents
-ne se verront pas.
+## Production
 
-Pour un vrai déploiement multi-appareils, remplace le contenu de
-`roomStore.js` par un vrai backend temps réel (WebSocket, Firebase
-Realtime Database, Supabase Realtime...). L'interface `get(key)` /
-`set(key, value)` attendue par le reste de l'app est volontairement
-minimale pour rendre ce remplacement rapide — aucun autre fichier n'a
-besoin de changer.
+```bash
+npm run build
+npm run server
+```
 
-## Fonctionnalités
+## Real-time Multiplayer
 
-- Rejoindre/créer une table via un code à 5 caractères
-- Renommage en direct depuis l'en-tête
-- Vote avec la séquence Fibonacci (0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, ?, ☕)
-- Cartes cachées tant que la table n'a pas révélé, puis flip animé
-- Moyenne et détection de consensus une fois révélé
-- "Nouveau tour" pour relancer un vote sans quitter la table
+The app uses **Socket.IO** for real-time multiplayer functionality. The `server.js` file runs a Node.js server that:
+
+- Stores room data in memory
+- Broadcasts updates to all connected clients in real-time
+- Handles WebSocket connections for instant synchronization
+- Auto-reconnects if connection is lost
+
+All players in the same room see updates immediately without polling.
+
+**Ports:**
+
+- Development: Socket.IO server on port 3150, Vite dev server on port 5173+
+- Production: Application runs on port 3100 (container port 80)
+
+## Features
+
+- Join/create a room with a 5-character code
+- Live renaming from the header
+- Vote with Fibonacci sequence (0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, ?, ☕)
+- Hidden cards until revealed, then animated flip
+- Average calculation and consensus detection once revealed
+- "New round" to start a new vote without leaving the room
+- Share links with the team
+- Auto-reconnect on page refresh

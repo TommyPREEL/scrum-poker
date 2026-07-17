@@ -1,55 +1,83 @@
 // -----------------------------------------------------------------------
-// Shared persistence layer.
+// Shared persistence layer using Socket.IO for real-time multiplayer.
 //
-// In the Claude Artifacts environment, `window.storage` provides a
-// key/value storage shared between all participants (see README).
-// Outside of Claude, this key doesn't exist: we fall back to
-// `localStorage`, which only works in ONE browser and therefore
-// doesn't allow real multi-player between multiple machines.
-//
-// For a real deployment (multi-device), replace `localFallback`
-// with a real real-time backend: WebSocket, Firebase, Supabase, etc.
-// The expected get/set interface is intentionally minimal to make
-// this replacement easy.
+// This implementation uses Socket.IO to communicate with a Node.js server
+// that stores room data in memory and broadcasts updates to all connected
+// clients in real-time.
 // -----------------------------------------------------------------------
 
-const ROOM_PREFIX = "poker-room:";
+import { io } from 'socket.io-client';
 
-const hasSharedStorage = typeof window !== "undefined" && !!window.storage;
+const SOCKET_URL = import.meta.env.PROD ? window.location.origin : 'http://localhost:3150';
+let socket = null;
+let roomUpdateCallback = null;
 
-const localFallback = {
-  async get(key) {
-    const raw = window.localStorage.getItem(key);
-    return raw ? { key, value: raw } : null;
-  },
-  async set(key, value) {
-    window.localStorage.setItem(key, value);
-    return { key, value };
-  },
-};
+// Initialize socket connection
+export function initSocket() {
+  if (socket) return socket;
+  
+  socket = io(SOCKET_URL, {
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    reconnectionAttempts: Infinity,
+  });
 
-const backend = hasSharedStorage ? window.storage : localFallback;
+  socket.on('connect', () => {
+    console.log('Connected to server');
+  });
+
+  socket.on('roomUpdated', (data) => {
+    if (roomUpdateCallback) {
+      roomUpdateCallback(data);
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Disconnected from server');
+  });
+
+  return socket;
+}
+
+// Set callback for room updates from other clients
+export function onRoomUpdate(callback) {
+  roomUpdateCallback = callback;
+}
+
+// Join a room to receive updates
+export function joinRoom(code) {
+  if (!socket) initSocket();
+  socket.emit('joinRoom', code);
+}
+
+// Leave a room
+export function leaveRoom(code) {
+  if (!socket) return;
+  socket.emit('leaveRoom', code);
+}
 
 export function emptyRoom() {
-  return { revealed: false, createdAt: Date.now(), players: {} };
+  return { revealed: false, createdAt: Date.now(), players: {}, sharedUrl: "" };
 }
 
 export async function loadRoom(code) {
-  try {
-    const res = await backend.get(ROOM_PREFIX + code, true);
-    return res ? JSON.parse(res.value) : null;
-  } catch {
-    return null;
-  }
+  return new Promise((resolve) => {
+    if (!socket) initSocket();
+    socket.emit('getRoom', code, (data) => {
+      resolve(data);
+    });
+  });
 }
 
 export async function saveRoom(code, data) {
-  try {
-    await backend.set(ROOM_PREFIX + code, JSON.stringify(data), true);
-  } catch (e) {
-    console.error("Failed to save room", e);
-  }
-  return data;
+  return new Promise((resolve) => {
+    if (!socket) initSocket();
+    socket.emit('updateRoom', { roomCode: code, data }, (updatedData) => {
+      resolve(updatedData);
+    });
+  });
 }
 
 // Reads the latest state, applies a pure transformation, saves.

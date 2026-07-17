@@ -12,11 +12,15 @@ FROM node:22-alpine
 
 WORKDIR /app
 
-# Install a simple static file server
-RUN npm install -g serve
+COPY package.json package-lock.json ./
+RUN npm ci --legacy-peer-deps --omit=dev
 
-COPY --from=builder /app/dist /app
+COPY --from=builder /app/dist ./dist
+COPY server.js ./
 
 EXPOSE 80
 
-CMD ["serve", "-s", ".", "-l", "80"]
+ENV NODE_ENV=production
+ENV PORT=80
+
+CMD ["node", "server.js"]

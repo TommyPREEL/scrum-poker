@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { JoinScreen } from "./components/JoinScreen.jsx";
 import { RoomScreen } from "./components/RoomScreen.jsx";
 import { useInterval } from "./hooks/useInterval.js";
-import { emptyRoom, updateRoom, loadRoom } from "./lib/roomStore.js";
+import { emptyRoom, updateRoom, loadRoom, initSocket, onRoomUpdate, joinRoom, leaveRoom } from "./lib/roomStore.js";
 import { makeId, POLL_MS, HEARTBEAT_MS } from "./constants.js";
 
 const SESSION_KEY = "scrum-poker-session";
@@ -47,6 +47,14 @@ export default function App() {
   const [room, setRoom] = useState(emptyRoom());
   const [reconnecting, setReconnecting] = useState(false);
 
+  // Initialize Socket.IO connection
+  useEffect(() => {
+    initSocket();
+    onRoomUpdate((updatedRoom) => {
+      setRoom(updatedRoom);
+    });
+  }, []);
+
   // Synchronize local state with shared storage.
   const refreshRoom = useCallback(async () => {
     if (!roomCodeRef.current) return;
@@ -71,6 +79,7 @@ export default function App() {
     roomCodeRef.current = code;
     setRoomCode(code);
     setName(playerName);
+    joinRoom(code);
     const next = await updateRoom(code, (r) => {
       const players = { ...r.players };
       players[playerIdRef.current] = {
@@ -124,7 +133,7 @@ export default function App() {
       Object.entries(r.players).forEach(([id, p]) => {
         players[id] = { ...p, vote: null };
       });
-      return { ...r, players, revealed: false };
+      return { ...r, players, revealed: false, sharedUrl: "" };
     };
     setRoom((r) => clear(r));
     const next = await updateRoom(code, clear);
@@ -177,6 +186,7 @@ export default function App() {
         setName(session.name);
         setRoom(roomData);
         setScreen("room");
+        joinRoom(session.roomCode);
         // Update last seen to signal we're back
         updateRoom(session.roomCode, (r) => {
           const players = { ...r.players };
@@ -196,6 +206,13 @@ export default function App() {
     });
   }, []);
 
+  const handleUpdateSharedUrl = useCallback(async (url) => {
+    const code = roomCodeRef.current;
+    setRoom((r) => ({ ...r, sharedUrl: url }));
+    const next = await updateRoom(code, (r) => ({ ...r, sharedUrl: url }));
+    setRoom(next);
+  }, []);
+
   const handleLeave = useCallback(async () => {
     const code = roomCodeRef.current;
     await updateRoom(code, (r) => {
@@ -203,6 +220,7 @@ export default function App() {
       delete players[playerIdRef.current];
       return { ...r, players };
     });
+    leaveRoom(code);
     clearSession();
     roomCodeRef.current = "";
     setRoomCode("");
@@ -237,6 +255,7 @@ export default function App() {
           onReveal={handleReveal}
           onNewRound={handleNewRound}
           onLeave={handleLeave}
+          onUpdateSharedUrl={handleUpdateSharedUrl}
         />
       )}
     </div>
