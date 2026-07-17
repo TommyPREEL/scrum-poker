@@ -6,6 +6,7 @@ export function JoinScreen({ onJoin, initialRoomCode }) {
   const [name, setName] = useState("");
   const [code, setCode] = useState(() => initialRoomCode || makeRoomCode());
   const [touchedCode, setTouchedCode] = useState(!!initialRoomCode);
+  const [isJoining, setIsJoining] = useState(false);
 
   useEffect(() => {
     if (initialRoomCode) {
@@ -14,11 +15,18 @@ export function JoinScreen({ onJoin, initialRoomCode }) {
     }
   }, [initialRoomCode]);
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     const trimmed = name.trim();
-    if (!trimmed) return;
-    onJoin(trimmed, code.trim().toUpperCase() || makeRoomCode());
+    if (!trimmed || isJoining) return;
+    
+    setIsJoining(true);
+    try {
+      await onJoin(trimmed, code.trim().toUpperCase() || makeRoomCode());
+    } finally {
+      // Reset after a delay to prevent rapid clicking even if join fails
+      setTimeout(() => setIsJoining(false), 1000);
+    }
   };
 
   return (
@@ -75,8 +83,8 @@ export function JoinScreen({ onJoin, initialRoomCode }) {
             </span>
           </label>
 
-          <button type="submit" className="sp-primary-btn" disabled={!name.trim()}>
-            Join the table
+          <button type="submit" className="sp-primary-btn" disabled={!name.trim() || isJoining}>
+            {isJoining ? "Joining..." : "Join the table"}
           </button>
         </form>
       </div>
