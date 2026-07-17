@@ -40,7 +40,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Prepare deployment directory
+      - name: Fix file permissions on server
         uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -51,7 +51,7 @@ jobs:
           script: |
             mkdir -p "$DEPLOY_PATH"
             cd "$DEPLOY_PATH"
-            rm -f docker-compose.yml
+            [ -f docker-compose.yml ] && chmod 664 docker-compose.yml || true
         env:
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
 
