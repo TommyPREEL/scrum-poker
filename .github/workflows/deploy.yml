@@ -40,6 +40,21 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Prepare deployment directory
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          envs: DEPLOY_PATH
+          script: |
+            mkdir -p "$DEPLOY_PATH"
+            cd "$DEPLOY_PATH"
+            rm -f docker-compose.yml
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+
       - name: Copy docker-compose.yml to server
         uses: appleboy/scp-action@v0.1.7
         with:
