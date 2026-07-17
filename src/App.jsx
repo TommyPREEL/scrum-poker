@@ -170,6 +170,9 @@ export default function App() {
       setUrlRoomCode(roomFromUrl.toUpperCase());
       // Clean URL without reloading
       window.history.replaceState({}, '', window.location.pathname);
+      // Clear old session when user wants to join a new room via URL
+      clearSession();
+      return;
     }
 
     const session = loadSession();
@@ -178,7 +181,14 @@ export default function App() {
     setReconnecting(true);
     playerIdRef.current = session.playerId;
 
+    // Set timeout to cancel reconnection after 10 seconds
+    const timeoutId = setTimeout(() => {
+      setReconnecting(false);
+      clearSession();
+    }, 5000);
+
     loadRoom(session.roomCode).then((roomData) => {
+      clearTimeout(timeoutId);
       if (roomData && roomData.players && roomData.players[session.playerId]) {
         // Room still exists and player is still in it, reconnect
         roomCodeRef.current = session.roomCode;
@@ -201,6 +211,7 @@ export default function App() {
       }
       setReconnecting(false);
     }).catch(() => {
+      clearTimeout(timeoutId);
       clearSession();
       setReconnecting(false);
     });
@@ -228,6 +239,11 @@ export default function App() {
     setScreen("join");
   }, []);
 
+  const handleCancelReconnect = useCallback(() => {
+    setReconnecting(false);
+    clearSession();
+  }, []);
+
   return (
     <div className="sp-app">
       {reconnecting ? (
@@ -240,6 +256,9 @@ export default function App() {
                 <p>Reconnecting...</p>
               </div>
             </div>
+            <button className="sp-secondary-btn sp-primary-btn--wide" onClick={handleCancelReconnect}>
+              Cancel
+            </button>
           </div>
         </div>
       ) : screen === "join" ? (
