@@ -93,6 +93,8 @@ export default function App() {
     setRoom(next);
     setScreen("room");
     saveSession(playerIdRef.current, playerName, code);
+    // Update URL to reflect current room
+    window.history.pushState({}, '', `?room=${code}`);
   }, []);
 
   const handleVote = useCallback(async (value) => {
@@ -197,6 +199,8 @@ export default function App() {
         setRoom(roomData);
         setScreen("room");
         joinRoom(session.roomCode);
+        // Update URL to reflect current room
+        window.history.replaceState({}, '', `?room=${session.roomCode}`);
         // Update last seen to signal we're back
         updateRoom(session.roomCode, (r) => {
           const players = { ...r.players };
@@ -237,12 +241,46 @@ export default function App() {
     setRoomCode("");
     setRoom(emptyRoom());
     setScreen("join");
+    // Clear room from URL
+    window.history.pushState({}, '', window.location.pathname);
   }, []);
 
   const handleCancelReconnect = useCallback(() => {
     setReconnecting(false);
     clearSession();
   }, []);
+
+  // Watch for URL changes while in a room (e.g., pasting a new room link)
+  useEffect(() => {
+    const checkUrlChange = () => {
+      if (screen !== "room") return;
+      
+      const params = new URLSearchParams(window.location.search);
+      const urlRoomCode = params.get('room');
+      
+      if (urlRoomCode && urlRoomCode.toUpperCase() !== roomCodeRef.current) {
+        // User pasted a new room link - switch to it
+        const currentName = name;
+        handleLeave().then(() => {
+          // Wait a bit for leave to complete, then join new room
+          setTimeout(() => {
+            handleJoin(currentName, urlRoomCode.toUpperCase());
+          }, 100);
+        });
+      }
+    };
+
+    // Check on interval (every 500ms)
+    const intervalId = setInterval(checkUrlChange, 500);
+    
+    // Also listen for popstate (back/forward navigation)
+    window.addEventListener('popstate', checkUrlChange);
+    
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('popstate', checkUrlChange);
+    };
+  }, [screen, name, handleLeave, handleJoin]);
 
   return (
     <div className="sp-app">
