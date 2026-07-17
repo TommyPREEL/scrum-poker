@@ -17,7 +17,7 @@ export function initSocket() {
   if (socket) return socket;
   
   socket = io(SOCKET_URL, {
-    transports: ['websocket', 'polling'],
+    transports: ['polling', 'websocket'],
     reconnection: true,
     reconnectionDelay: 1000,
     reconnectionDelayMax: 5000,
@@ -26,6 +26,14 @@ export function initSocket() {
 
   socket.on('connect', () => {
     console.log('Connected to server');
+  });
+
+  socket.on('connect_error', (error) => {
+    console.error('Socket.IO connection error:', error);
+  });
+
+  socket.on('disconnect', (reason) => {
+    console.log('Disconnected from server:', reason);
   });
 
   socket.on('roomUpdated', (data) => {

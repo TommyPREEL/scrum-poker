@@ -13,7 +13,11 @@ const io = new Server(httpServer, {
   cors: {
     origin: true,
     credentials: true
-  }
+  },
+  transports: ['polling', 'websocket'],
+  allowEIO3: true,
+  pingTimeout: 60000,
+  pingInterval: 25000
 });
 
 // In-memory storage for rooms
