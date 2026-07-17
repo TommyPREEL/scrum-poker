@@ -2,14 +2,11 @@ services:
   scrum-poker:
     container_name: scrum-poker
     image: ${IMAGE:-ghcr.io/tommypreel/scrum-poker:latest}
-    build:
-      context: .
-      dockerfile: Dockerfile
     ports:
-      - "3501:80"
+      - "3100:80"
     restart: always
     environment:
-      - PORT=80
+      - PORT=3100
     networks:
       - web
 
