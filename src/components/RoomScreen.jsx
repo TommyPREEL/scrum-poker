@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Copy, Check, Eye, EyeOff, RefreshCw, LogOut, Pencil, Users } from "lucide-react";
+import { Check, Eye, EyeOff, RefreshCw, LogOut, Pencil, Users, Share2 } from "lucide-react";
 import { DECK, NUMERIC, STALE_MS } from "../constants.js";
 import { Seat } from "./Seat.jsx";
 import { HandCard } from "./HandCard.jsx";
@@ -15,7 +15,7 @@ export function RoomScreen({
   onNewRound,
   onLeave,
 }) {
-  const [copied, setCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState(name);
 
@@ -59,13 +59,30 @@ export function RoomScreen({
     });
   }, [activePlayers.length]);
 
-  const copyCode = async () => {
+  const shareLink = async () => {
+    const url = `${window.location.origin}${window.location.pathname}?room=${roomCode}`;
+    
+    // Try native share API first (mobile)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Scrum Poker',
+          text: `Join my planning poker session`,
+          url: url
+        });
+        return;
+      } catch {
+        // User cancelled or share not available, fall back to copy
+      }
+    }
+    
+    // Fallback to clipboard
     try {
-      await navigator.clipboard.writeText(roomCode);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 1500);
     } catch {
-      /* presse-papiers indisponible, on ignore */
+      /* clipboard unavailable, ignore */
     }
   };
 
@@ -84,8 +101,8 @@ export function RoomScreen({
           <div>
             <div className="sp-room-code-row">
               <span className="sp-room-code">{roomCode}</span>
-              <button className="sp-icon-btn sp-icon-btn--ghost" onClick={copyCode} title="Copy code">
-                {copied ? <Check size={15} /> : <Copy size={15} />}
+              <button className="sp-icon-btn sp-icon-btn--ghost" onClick={shareLink} title="Share link">
+                {linkCopied ? <Check size={15} /> : <Share2 size={15} />}
               </button>
             </div>
             <div className="sp-header-sub">

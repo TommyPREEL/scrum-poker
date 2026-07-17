@@ -1,19 +1,19 @@
-// Séquence de vote Fibonacci utilisée en planning poker.
+// Fibonacci voting sequence used in planning poker.
 export const DECK = ["0", "1", "2", "3", "5", "8", "13", "21", "34", "55", "89", "?", "☕"];
 
-// Sous-ensemble des valeurs numériques du deck, utilisé pour calculer la moyenne.
+// Subset of numeric values from the deck, used to calculate average.
 export const NUMERIC = new Set(["0", "1", "2", "3", "5", "8", "13", "21", "34", "55", "89"]);
 
-// Cadence de synchronisation de la table entre les participants.
+// Room synchronization polling interval.
 export const POLL_MS = 1400;
 
-// Fréquence à laquelle chaque client signale qu'il est toujours présent.
+// Frequency at which each client signals it's still present.
 export const HEARTBEAT_MS = 6000;
 
-// Au-delà de ce délai sans "heartbeat", un joueur est affiché comme inactif.
+// Beyond this delay without a heartbeat, a player is displayed as inactive.
 export const STALE_MS = 20000;
 
-// Caractères utilisés pour générer un code de table (sans caractères ambigus).
+// Characters used to generate a room code (without ambiguous characters).
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 export function makeId() {

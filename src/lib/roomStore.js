@@ -1,16 +1,16 @@
 // -----------------------------------------------------------------------
-// Couche de persistance partagée.
+// Shared persistence layer.
 //
-// Dans l'environnement Claude Artifacts, `window.storage` fournit un
-// stockage clé/valeur partagé entre tous les participants (voir le README).
-// Hors de Claude, cette clé n'existe pas : on retombe alors sur
-// `localStorage`, qui ne fonctionne que dans UN SEUL navigateur et ne
-// permet donc pas un vrai multi-joueur entre plusieurs machines.
+// In the Claude Artifacts environment, `window.storage` provides a
+// key/value storage shared between all participants (see README).
+// Outside of Claude, this key doesn't exist: we fall back to
+// `localStorage`, which only works in ONE browser and therefore
+// doesn't allow real multi-player between multiple machines.
 //
-// Pour un déploiement réel (multi-appareils), remplace `localFallback`
-// par un vrai backend temps réel : WebSocket, Firebase, Supabase, etc.
-// L'interface get/set attendue est volontairement minimale pour rendre
-// ce remplacement facile.
+// For a real deployment (multi-device), replace `localFallback`
+// with a real real-time backend: WebSocket, Firebase, Supabase, etc.
+// The expected get/set interface is intentionally minimal to make
+// this replacement easy.
 // -----------------------------------------------------------------------
 
 const ROOM_PREFIX = "poker-room:";
@@ -47,14 +47,14 @@ export async function saveRoom(code, data) {
   try {
     await backend.set(ROOM_PREFIX + code, JSON.stringify(data), true);
   } catch (e) {
-    console.error("Échec de la sauvegarde de la table", e);
+    console.error("Failed to save room", e);
   }
   return data;
 }
 
-// Lit l'état le plus récent, applique une transformation pure, sauvegarde.
-// Toutes les actions (voter, révéler, renommer...) passent par cette
-// fonction unique pour garder un seul chemin d'écriture cohérent.
+// Reads the latest state, applies a pure transformation, saves.
+// All actions (vote, reveal, rename...) go through this
+// single function to maintain a consistent write path.
 export async function updateRoom(code, mutate) {
   const current = (await loadRoom(code)) || emptyRoom();
   const next = mutate(current);

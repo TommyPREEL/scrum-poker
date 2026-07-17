@@ -1,11 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dices } from "lucide-react";
 import { makeRoomCode } from "../constants.js";
 
-export function JoinScreen({ onJoin }) {
+export function JoinScreen({ onJoin, initialRoomCode }) {
   const [name, setName] = useState("");
-  const [code, setCode] = useState(() => makeRoomCode());
-  const [touchedCode, setTouchedCode] = useState(false);
+  const [code, setCode] = useState(() => initialRoomCode || makeRoomCode());
+  const [touchedCode, setTouchedCode] = useState(!!initialRoomCode);
+
+  useEffect(() => {
+    if (initialRoomCode) {
+      setCode(initialRoomCode);
+      setTouchedCode(true);
+    }
+  }, [initialRoomCode]);
 
   const submit = (e) => {
     e.preventDefault();
