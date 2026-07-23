@@ -208,7 +208,7 @@ export function RoomScreen({
               <div className="sp-stats">
                 {stats.median != null ? (
                   <>
-                    <div className="sp-stats-avg">{stats.median}</div>
+                    <div className="sp-stats-median">{stats.median}</div>
                     <div className="sp-stats-label">median</div>
                     {stats.consensus && <div className="sp-stats-consensus">Consensus!</div>}
                     {!stats.consensus && (
