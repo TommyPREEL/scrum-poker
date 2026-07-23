@@ -1,7 +1,7 @@
 // Fibonacci voting sequence used in planning poker.
 export const DECK = ["0", "1", "2", "3", "5", "8", "13", "21", "34", "55", "89", "?", "☕"];
 
-// Subset of numeric values from the deck, used to calculate average.
+// Subset of numeric values from the deck, used to calculate median.
 export const NUMERIC = new Set(["0", "1", "2", "3", "5", "8", "13", "21", "34", "55", "89"]);
 
 // Room synchronization polling interval.
