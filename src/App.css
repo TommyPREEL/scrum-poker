@@ -411,7 +411,7 @@ body {
 .sp-stats {
   text-align: center;
 }
-.sp-stats-avg {
+.sp-stats-median {
   font-family: "Space Grotesk", sans-serif;
   font-size: 46px;
   font-weight: 700;
@@ -612,7 +612,7 @@ body {
   .sp-card-front {
     font-size: 17px;
   }
-  .sp-stats-avg {
+  .sp-stats-median {
     font-size: 34px;
   }
   .sp-join-card {

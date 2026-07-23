@@ -42,10 +42,17 @@ export function RoomScreen({
       .map(Number);
     const votedValues = activePlayers.map((p) => p.vote).filter((v) => v != null);
     const consensus = votedValues.length > 0 && votedValues.every((v) => v === votedValues[0]);
-    if (numericVotes.length === 0) return { avg: null, consensus, min: null, max: null };
-    const avg = numericVotes.reduce((a, b) => a + b, 0) / numericVotes.length;
+    if (numericVotes.length === 0) return { median: null, consensus, min: null, max: null };
+    
+    // Calculate median
+    const sorted = [...numericVotes].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    const median = sorted.length % 2 === 0
+      ? (sorted[mid - 1] + sorted[mid]) / 2
+      : sorted[mid];
+    
     return {
-      avg: Math.round(avg * 10) / 10,
+      median: Math.round(median * 10) / 10,
       consensus,
       min: Math.min(...numericVotes),
       max: Math.max(...numericVotes),
@@ -199,10 +206,10 @@ export function RoomScreen({
           <div className="sp-table-felt">
             {room.revealed && stats && (
               <div className="sp-stats">
-                {stats.avg != null ? (
+                {stats.median != null ? (
                   <>
-                    <div className="sp-stats-avg">{stats.avg}</div>
-                    <div className="sp-stats-label">average</div>
+                    <div className="sp-stats-median">{stats.median}</div>
+                    <div className="sp-stats-label">median</div>
                     {stats.consensus && <div className="sp-stats-consensus">Consensus!</div>}
                     {!stats.consensus && (
                       <div className="sp-stats-range">
