@@ -82,7 +82,7 @@ All players in the same room see updates immediately without polling.
 - Live renaming from the header
 - Vote with Fibonacci sequence (0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, ?, ☕)
 - Hidden cards until revealed, then animated flip
-- Average calculation and consensus detection once revealed
+- Median calculation and consensus detection once revealed
 - "New round" to start a new vote without leaving the room
 - Share links with the team
 - Auto-reconnect on page refresh
