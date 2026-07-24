@@ -202,6 +202,12 @@ export function RoomScreen({
       )}
 
       <section className="sp-voting-section">
+        <div className="sp-hand">
+          {DECK.map((v) => (
+            <HandCard key={v} value={v} selected={self?.vote === v} onSelect={onVote} />
+          ))}
+        </div>
+
         <div className="sp-controls">
           <button className="sp-primary-btn sp-primary-btn--wide" onClick={onReveal}>
             {room.revealed ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -211,12 +217,6 @@ export function RoomScreen({
             <RefreshCw size={15} />
             New round
           </button>
-        </div>
-
-        <div className="sp-hand">
-          {DECK.map((v) => (
-            <HandCard key={v} value={v} selected={self?.vote === v} onSelect={onVote} />
-          ))}
         </div>
       </section>
 
