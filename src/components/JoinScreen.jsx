@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { Dices } from "lucide-react";
 import { makeRoomCode } from "../constants.js";
 
-export function JoinScreen({ onJoin, initialRoomCode }) {
-  const [name, setName] = useState("");
+export function JoinScreen({ onJoin, initialRoomCode, initialName }) {
+  const [name, setName] = useState(() => initialName || "");
   const [code, setCode] = useState(() => initialRoomCode || makeRoomCode());
   const [touchedCode, setTouchedCode] = useState(!!initialRoomCode);
   const [isJoining, setIsJoining] = useState(false);

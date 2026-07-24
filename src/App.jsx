@@ -6,6 +6,7 @@ import { emptyRoom, updateRoom, loadRoom, initSocket, onRoomUpdate, joinRoom, le
 import { makeId, POLL_MS, HEARTBEAT_MS } from "./constants.js";
 
 const SESSION_KEY = "scrum-poker-session";
+const NAME_KEY = "scrum-poker-name";
 
 function saveSession(playerId, name, roomCode) {
   try {
@@ -35,6 +36,20 @@ function clearSession() {
   } catch {}
 }
 
+function saveName(name) {
+  try {
+    localStorage.setItem(NAME_KEY, name);
+  } catch {}
+}
+
+function loadName() {
+  try {
+    return localStorage.getItem(NAME_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
 export default function App() {
   const playerIdRef = useRef(makeId());
   const roomCodeRef = useRef("");
@@ -42,7 +57,7 @@ export default function App() {
   const [urlRoomCode, setUrlRoomCode] = useState(null);
 
   const [screen, setScreen] = useState("join");
-  const [name, setName] = useState("");
+  const [name, setName] = useState(() => loadName());
   const [roomCode, setRoomCode] = useState("");
   const [room, setRoom] = useState(emptyRoom());
   const [reconnecting, setReconnecting] = useState(false);
@@ -93,6 +108,7 @@ export default function App() {
     setRoom(next);
     setScreen("room");
     saveSession(playerIdRef.current, playerName, code);
+    saveName(playerName);
     // Update URL to reflect current room
     window.history.pushState({}, '', `?room=${code}`);
   }, []);
@@ -300,7 +316,7 @@ export default function App() {
           </div>
         </div>
       ) : screen === "join" ? (
-        <JoinScreen onJoin={handleJoin} initialRoomCode={urlRoomCode} />
+        <JoinScreen onJoin={handleJoin} initialRoomCode={urlRoomCode} initialName={name} />
       ) : (
         <RoomScreen
           playerId={playerIdRef.current}
