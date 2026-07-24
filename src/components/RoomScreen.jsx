@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Check, Eye, EyeOff, RefreshCw, LogOut, Pencil, Users, Share2, Link } from "lucide-react";
-import { DECK, NUMERIC, STALE_MS } from "../constants.js";
+import { DECK, NUMERIC } from "../constants.js";
 import { Seat } from "./Seat.jsx";
 import { HandCard } from "./HandCard.jsx";
 
@@ -28,9 +28,7 @@ export function RoomScreen({
       .sort((a, b) => a.joinedAt - b.joinedAt);
   }, [room.players]);
 
-  const activePlayers = players.filter(
-    (p) => Date.now() - p.lastSeen <= STALE_MS || p.id === playerId
-  );
+  const activePlayers = players;
   const voteCount = activePlayers.filter((p) => p.vote != null).length;
   const self = room.players?.[playerId];
 
@@ -44,8 +42,15 @@ export function RoomScreen({
     const consensus = votedValues.length > 0 && votedValues.every((v) => v === votedValues[0]);
     if (numericVotes.length === 0) return { avg: null, consensus, min: null, max: null };
     const avg = numericVotes.reduce((a, b) => a + b, 0) / numericVotes.length;
+    
+    // Find the closest value in the deck
+    const numericDeck = Array.from(NUMERIC).map(Number).sort((a, b) => a - b);
+    const closestValue = numericDeck.reduce((prev, curr) => 
+      Math.abs(curr - avg) < Math.abs(prev - avg) ? curr : prev
+    );
+    
     return {
-      avg: Math.round(avg * 10) / 10,
+      avg: closestValue,
       consensus,
       min: Math.min(...numericVotes),
       max: Math.max(...numericVotes),
@@ -194,6 +199,25 @@ export function RoomScreen({
         </div>
       )}
 
+      <section className="sp-voting-section">
+        <div className="sp-controls">
+          <button className="sp-primary-btn sp-primary-btn--wide" onClick={onReveal}>
+            {room.revealed ? <EyeOff size={16} /> : <Eye size={16} />}
+            {room.revealed ? "Hide cards" : "Reveal cards"}
+          </button>
+          <button className="sp-secondary-btn" onClick={onNewRound}>
+            <RefreshCw size={15} />
+            New round
+          </button>
+        </div>
+
+        <div className="sp-hand">
+          {DECK.map((v) => (
+            <HandCard key={v} value={v} selected={self?.vote === v} onSelect={onVote} />
+          ))}
+        </div>
+      </section>
+
       <main className="sp-table-wrap">
         <div className="sp-table">
           <div className="sp-table-felt">
@@ -238,25 +262,6 @@ export function RoomScreen({
           ))}
         </div>
       </main>
-
-      <footer className="sp-footer">
-        <div className="sp-controls">
-          <button className="sp-primary-btn sp-primary-btn--wide" onClick={onReveal}>
-            {room.revealed ? <EyeOff size={16} /> : <Eye size={16} />}
-            {room.revealed ? "Hide cards" : "Reveal cards"}
-          </button>
-          <button className="sp-secondary-btn" onClick={onNewRound}>
-            <RefreshCw size={15} />
-            New round
-          </button>
-        </div>
-
-        <div className="sp-hand">
-          {DECK.map((v) => (
-            <HandCard key={v} value={v} selected={self?.vote === v} onSelect={onVote} />
-          ))}
-        </div>
-      </footer>
     </div>
   );
 }

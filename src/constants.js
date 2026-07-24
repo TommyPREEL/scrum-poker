@@ -1,8 +1,8 @@
 // Fibonacci voting sequence used in planning poker.
-export const DECK = ["0", "1", "2", "3", "5", "8", "13", "21", "34", "55", "89", "?", "☕"];
+export const DECK = ["0.5", "1", "2", "3", "5", "13", "20", "40", "100", "?", "☕"];
 
 // Subset of numeric values from the deck, used to calculate average.
-export const NUMERIC = new Set(["0", "1", "2", "3", "5", "8", "13", "21", "34", "55", "89"]);
+export const NUMERIC = new Set(["0.5", "1", "2", "3", "5", "13", "20", "40", "100"]);
 
 // Room synchronization polling interval.
 export const POLL_MS = 1400;
