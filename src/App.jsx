@@ -83,9 +83,11 @@ export default function App() {
     if (screen !== "room" || !roomCodeRef.current) return;
     updateRoom(roomCodeRef.current, (r) => {
       const players = { ...r.players };
-      if (players[playerIdRef.current]) {
-        players[playerIdRef.current] = { ...players[playerIdRef.current], lastSeen: Date.now() };
-      }
+      const me = players[playerIdRef.current];
+      // Re-seat ourselves if the server pruned us while the tab was asleep.
+      players[playerIdRef.current] = me
+        ? { ...me, lastSeen: Date.now() }
+        : { name, vote: null, joinedAt: Date.now(), lastSeen: Date.now() };
       return { ...r, players };
     }).then(setRoom);
   }, screen === "room" ? HEARTBEAT_MS : null);

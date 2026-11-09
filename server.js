@@ -23,6 +23,27 @@ const io = new Server(httpServer, {
 // In-memory storage for rooms
 const rooms = new Map();
 
+// Players not seen for this long are removed from their room, so renamed or
+// abandoned seats don't pile up when a room is reused over several weeks.
+const PLAYER_TTL_MS = Number(process.env.PLAYER_TTL_MS) || 30 * 60 * 1000;
+const PRUNE_EVERY_MS = 60 * 1000;
+
+function pruneRooms(now = Date.now()) {
+  for (const [code, room] of rooms) {
+    const players = room.players || {};
+    const kept = Object.fromEntries(
+      Object.entries(players).filter(([, p]) => now - (p.lastSeen ?? 0) <= PLAYER_TTL_MS)
+    );
+    if (Object.keys(kept).length !== Object.keys(players).length) {
+      const next = { ...room, players: kept };
+      rooms.set(code, next);
+      io.to(code).emit('roomUpdated', next);
+    }
+    // Empty rooms are kept on purpose: the room URL is shared and reused for weeks.
+  }
+}
+setInterval(pruneRooms, PRUNE_EVERY_MS).unref();
+
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(join(__dirname, 'dist')));
